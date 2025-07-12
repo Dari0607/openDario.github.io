@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>SUS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jsPDF y html2canvas para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            background-color: white;
+            color: rgb(31, 60, 121);
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .btnC:hover, .btnC {
+            background-color: rgb(82, 8, 7);
+            color: white;
+        }
+        .btn:hover, .btn {
+            background-color: rgb(31, 60, 121);
+            color: white;
+        }
+        .tabla-general {
+            margin: 20px auto;
+            border: 1px solid #D4E1F6;
+            border-radius: 10px;
+            padding: 20px;
+            background-color: white;
+            width: 100%;
+            max-width: 700px;
+        }
+        .tabla-general td {
+            padding: 6px 10px;
+            vertical-align: middle;
+        }
+        .seccion-titulo {
+            font-weight: bold;
+            text-align: center;
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #D4E1F6;
+            color: rgb(2, 8, 63);
+        }
+        input[type="text"], input[type="email"], input[type="number"] {
+            width: 100%;
+            max-width: 220px;
+            height: 28px;
+            font-size: 0.9rem;
+            padding: 2px 6px;
+        }
+        .contenedor-cancelar {
+            display: flex;
+            justify-content: flex-end;
+            margin: 10px 0 30px 0;
+        }
+        .tabla-sus {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto 30px auto;
+            border: 1px solid #D4E1F6;
+            border-radius: 10px;
+            background-color: #F4F8FF;
+            font-size: 0.9rem;
+            overflow: hidden;
+            display: none;
+        }
+        .tabla-sus th,
+        .tabla-sus td {
+            text-align: center;
+            vertical-align: middle;
+            padding: 10px;
+            border: 1px solid #D4E1F6;
+        }
+        .tabla-sus tr:nth-child(even) {
+            background-color: #FFFFFF;
+        }
+        .tabla-sus tr:nth-child(odd) {
+            background-color: #EAF1FC;
+        }
+        .tabla-sus th {
+            background-color: #D4E1F6;
+            color: rgb(2, 8, 63);
+        }
+        #contenedorEvaluar {
+            text-align: center;
+            margin-bottom: 30px;
+            display: none;
+        }
+        .resultado {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto 30px auto;
+        }
+        /* Estilos para radio checked */
+        input[type="radio"]:checked + label {
+            background-color: rgb(31, 60, 121);
+            color: white;
+            border-radius: 4px;
+        }
+        /* Dropdown menú opciones export */
+        #opcionesExport {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto 20px auto;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botón Cancelar -->
+    <div class="contenedor-cancelar">
+        <button class="btn btnC" id="btnCancelar" onclick="recargarPagina()">CANCELAR</button>
+    </div>
+
+    <!-- Tabla datos del revisor -->
+    <table class="tabla-general" id="tablaContacto" >
+        <tr>
+            <td colspan="2" class="seccion-titulo">DATOS DEL REVISOR</td>
+            <td colspan="2" class="seccion-titulo">CONTACTO</td>
+        </tr>
+        <tr><td><td></td></td></tr>
+        <tr>
+            <td>NOMBRES:</td>
+            <td><input type="text" id="nombres" class="form-control form-control-sm" /></td>
+            <td>CORREO:</td>
+            <td><input type="email" id="correo" class="form-control form-control-sm" /></td>
+        </tr>
+        <tr>
+            <td>APELLIDOS:</td>
+            <td><input type="text" id="apellidos" class="form-control form-control-sm" /></td>
+            <td>TELÉFONO:</td>
+            <td><input type="number" id="telefono" class="form-control form-control-sm" /></td>
+        </tr>
+        <tr><td><td></td></td></tr>
+    </table>
+
+    <!-- Botón para mostrar tabla SUS -->
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="btn" id="btnMostrarSUS" onclick="mostrarSUS()">SUS</button>
+    </div>
+
+    <!-- Tabla SUS -->
+    <table class="tabla-sus" id="tablaSUS"></table>
+
+    <!-- Botón Evaluar -->
+    <div id="contenedorEvaluar">
+        <button class="btn" id="btnEvaluar" onclick="evaluar()">EVALUAR</button>
+    </div>
+
+    <!-- Menú opciones exportar -->
+    <div id="opcionesExport"></div>
+
+    <!-- Resultado -->
+    <div class="resultado" id="seccionResultado"></div>
+
+<script>
+var preguntas = [
+    "Creo que me gustaría utilizar este sistema con frecuencia",
+    "Encontré el sistema innecesariamente complejo",
+    "Pensé que el sistema era fácil de usar",
+    "Creo que necesitaría el apoyo de un técnico para poder utilizar este sistema",
+    "Encontré que las diversas funciones de este sistema estaban bien integradas",
+    "Pensé que había demasiada inconsistencia en este sistema",
+    "Me imagino que la mayoría de la gente aprendería a utilizar este sistema muy rápidamente",
+    "Encontré el sistema muy complicado de usar",
+    "Me sentí muy seguro utilizando el sistema",
+    "Necesitaba aprender muchas cosas antes de empezar con este sistema"
+];
+// Funcion de recargar pagina para el boton de cancelar
+function recargarPagina() {
+    location.reload();
+}
+// Funcion para mostrar la tabla SUS
+function mostrarSUS() {
+    var campos = ["nombres", "apellidos", "correo", "telefono"];
+    var incompleto = campos.some(function(id) {
+        return document.getElementById(id).value.trim() === "";
+    });
+    if (incompleto) {
+        alert("Por favor, complete todos los campos antes de continuar.");
+        return;
+    }
+
+    var tablaSUS = document.getElementById("tablaSUS");
+    var contEvaluar = document.getElementById("contenedorEvaluar");
+    var resultado = document.getElementById("seccionResultado");
+    var opcionesExport = document.getElementById("opcionesExport");
+
+    var html = '<tr><th>N°</th><th>CRITERIO</th>';
+    for (var i = 1; i <= 5; i++) {
+        var texto = "";
+        if(i === 1) texto = "TOTALMENTE EN DESACUERDO\n\n1pt";
+        else if(i === 2) texto = "EN DESACUERDO\n2pts";
+        else if(i === 3) texto = "NEUTRO\n3pts";
+        else if(i === 4) texto = "DE ACUERDO\n4pts";
+        else if(i === 5) texto = "TOTALMENTE DE ACUERDO\n"+"5pts";
+        html += '<th>' + texto +'</th>';
+    }
+    html += '</tr>';
+
+    preguntas.forEach(function(pregunta, i) {
+        html += '<tr><td>' + (i + 1) + '</td><td style="text-align:left;">' + pregunta + '</td>';
+        for (var j = 1; j <= 5; j++) {
+            var inputId = 'p' + (i+1) + '_r' + j;
+            html += '<td><input type="radio" name="p' + (i+1) + '" id="' + inputId + '" value="' + j + '" />' +
+                    '<label for="' + inputId + '"></label></td>';
+        }
+        html += '</tr>';
+    });
+
+    tablaSUS.innerHTML = html;
+    tablaSUS.style.display = "table";
+    contEvaluar.style.display = "block";
+
+    resultado.style.display = "none";
+    opcionesExport.style.display = "none";
+    opcionesExport.innerHTML = "";
+}
+// Funcion del boton evaluar
+function evaluar() {
+    var puntaje = 0;
+    for (var i = 1; i <= 10; i++) {
+        var radios = document.getElementsByName("p" + i);
+        var seleccionado = null;
+        for (var k=0; k < radios.length; k++) {
+            if (radios[k].checked) {
+                seleccionado = radios[k];
+                break;
+            }
+        }
+        if (!seleccionado) {
+            alert("Por favor, responda todas las preguntas.");
+            return;
+        }
+        var val = parseInt(seleccionado.value);
+        if (i % 2 === 1) {
+            puntaje += val - 1;
+        } else {
+            puntaje += 5 - val;
+        }
+    }
+    var resultadoFinal = puntaje * 2.5;
+
+    var resultado = document.getElementById("seccionResultado");
+    resultado.innerHTML = '<div class="card">' +
+        '<div class="card-body">' +
+        '<h5 class="card-title">Resultado de la evaluación</h5>' +
+        '<p id="mensaje"></p>' +
+        '<div class="progress">' +
+        '<div id="barra" class="progress-bar" role="progressbar" style="width: ' + resultadoFinal + '%; min-width: 50px;" ' +
+        'aria-valuenow="' + resultadoFinal + '" aria-valuemin="0" aria-valuemax="100">' + resultadoFinal.toFixed(1) + '%</div>' +
+        '</div><br />' +
+        '<label for="sugerencia">Sugerencias:</label>' +
+        '<textarea id="sugerencia" class="form-control" rows="3" placeholder="Ingrese sus sugerencias..."></textarea><br />' +
+        '<button class="btn btn-primary" id="btnEnviarSug" onclick="enviarSugerencia()">Enviar</button>' +
+        '</div></div>';
+    resultado.style.display = "block";
+
+    var barra = document.getElementById("barra");
+    var mensaje = document.getElementById("mensaje");
+
+    if (resultadoFinal < 51) {
+        mensaje.innerText = "NECESITA MEJORAS";
+        barra.className = "progress-bar bg-danger";
+    } else if (resultadoFinal <= 68) {
+        mensaje.innerText = "ACEPTABLE";
+        barra.className = "progress-bar bg-warning text-dark";
+    } else if (resultadoFinal <= 80.3) {
+        mensaje.innerText = "BUENO";
+        barra.className = "progress-bar bg-info";
+    } else {
+        mensaje.innerText = "EXCELENTE";
+        barra.className = "progress-bar bg-success";
+    }
+
+    // Mostrar opciones exportar
+    var opcionesExport = document.getElementById("opcionesExport");
+    opcionesExport.innerHTML = 
+        '<div class="dropdown">' +
+            '<button class="btn btn-secondary dropdown-toggle" type="button" id="btnDropdown" data-bs-toggle="dropdown" aria-expanded="false">⋮</button>' +
+            '<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="btnDropdown">' +
+                '<li><a class="dropdown-item" href="#" onclick="imprimirEvaluacion(event)">Imprimir</a></li>' +
+                '<li><a class="dropdown-item" href="#" onclick="exportarPDF(event)">Exportar PDF</a></li>' +
+                '<li><a class="dropdown-item" href="#" onclick="exportarExcel(event)">Exportar Excel</a></li>' +
+            '</ul>' +
+        '</div>';
+    opcionesExport.style.display = "block";
+}
+
+function enviarSugerencia() {
+    var sugerencia = document.getElementById("sugerencia").value.trim();
+    if (sugerencia === "") {
+        alert("Por favor, ingrese una sugerencia antes de enviar.");
+        return;
+    }
+    alert("Sugerencia enviada: " + sugerencia);
+    document.getElementById("sugerencia").value = "";
+}
+
+function imprimirEvaluacion(e) {
+    e.preventDefault();
+
+    var contenido = document.createElement("div");
+
+    var tablaContactoClone = document.getElementById("tablaContacto").cloneNode(true);
+    contenido.appendChild(tablaContactoClone);
+    contenido.appendChild(document.createElement("br"));
+
+    var tablaSUSClone = document.getElementById("tablaSUS").cloneNode(true);
+    // Marcar radios seleccionados en clone
+    preguntas.forEach(function(_, i) {
+        var name = "p" + (i + 1);
+        var radiosOriginal = document.getElementsByName(name);
+        var radiosClone = tablaSUSClone.querySelectorAll('input[name="' + name + '"]');
+        radiosOriginal.forEach(function(radio, idx) {
+            if (radio.checked && radiosClone[idx]) {
+                radiosClone[idx].checked = true;
+            }
+        });
+    });
+    contenido.appendChild(tablaSUSClone);
+    contenido.appendChild(document.createElement("br"));
+
+    var resultadoClone = document.getElementById("seccionResultado").cloneNode(true);
+    contenido.appendChild(resultadoClone);
+
+    var ventana = window.open("", "_blank");
+    ventana.document.write('<html><head><title>Imprimir Evaluación SUS</title>' +
+        '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />' +
+        '<style>body { padding: 20px; color: rgb(31, 60, 121); } table { width: 100%; border-collapse: collapse; margin-bottom: 20px;} th, td { border: 1px solid #D4E1F6; padding: 10px; text-align: center; vertical-align: middle;} th { background-color: #D4E1F6; color: rgb(2, 8, 63);} textarea { width: 100%; height: 100px; } .progress { height: 30px; } .progress-bar { line-height: 30px; font-weight: bold; }</style>' +
+        '</head><body>' + contenido.innerHTML + '</body></html>');
+    ventana.document.close();
+    ventana.focus();
+    ventana.print();
+}
+
+function exportarPDF(e) {
+    e.preventDefault();
+
+    var { jsPDF } = window.jspdf;
+    var pdf = new jsPDF('p', 'pt', 'a4');
+    var contenido = document.createElement("div");
+
+    var tablaContactoClone = document.getElementById("tablaContacto").cloneNode(true);
+    contenido.appendChild(tablaContactoClone);
+    contenido.appendChild(document.createElement("br"));
+
+    var tablaSUSClone = document.getElementById("tablaSUS").cloneNode(true);
+    preguntas.forEach(function(_, i) {
+        var name = "p" + (i + 1);
+        var radiosOriginal = document.getElementsByName(name);
+        var radiosClone = tablaSUSClone.querySelectorAll('input[name="' + name + '"]');
+        radiosOriginal.forEach(function(radio, idx) {
+            if (radio.checked && radiosClone[idx]) {
+                radiosClone[idx].checked = true;
+            }
+        });
+    });
+    contenido.appendChild(tablaSUSClone);
+    contenido.appendChild(document.createElement("br"));
+
+    var resultadoClone = document.getElementById("seccionResultado").cloneNode(true);
+    contenido.appendChild(resultadoClone);
+
+    contenido.style.padding = "20px";
+    contenido.style.color = "rgb(31, 60, 121)";
+    contenido.style.background = "#F4F8FF";
+    contenido.style.fontSize = "12pt";
+    contenido.style.width = "800px";
+
+    html2canvas(contenido, { scale: 2 }).then(function(canvas) {
+        var imgData = canvas.toDataURL('image/png');
+        var imgProps = pdf.getImageProperties(imgData);
+        var pdfWidth = pdf.internal.pageSize.getWidth() - 40;
+        var pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 20, 20, pdfWidth, pdfHeight);
+        pdf.save("Evaluacion_SUS.pdf");
+    });
+}
+
+function exportarExcel(e) {
+    e.preventDefault();
+
+    var tablaContactoExcel = document.getElementById("tablaContacto").outerHTML;
+
+    var tablaSUSClone = document.getElementById("tablaSUS").cloneNode(true);
+    preguntas.forEach(function(_, i) {
+        var name = "p" + (i + 1);
+        var radiosOriginal = document.getElementsByName(name);
+        var radiosClone = tablaSUSClone.querySelectorAll('input[name="' + name + '"]');
+        radiosClone.forEach(function(input) { input.remove(); });
+        var respuesta = "";
+        radiosOriginal.forEach(function(radio) {
+            if (radio.checked) respuesta = radio.value;
+        });
+        var fila = tablaSUSClone.rows[i + 1];
+        var tdRespuesta = document.createElement("td");
+        tdRespuesta.innerText = respuesta;
+        fila.appendChild(tdRespuesta);
+    });
+    var tablaSUSExcel = tablaSUSClone.outerHTML;
+
+    var resultadoTexto = document.getElementById("seccionResultado").innerText;
+
+    var htmlExcel = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office"
+              xmlns:x="urn:schemas-microsoft-com:office:excel"
+              xmlns="http://www.w3.org/TR/REC-html40">
+        <head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Evaluacion SUS</x:Name><x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+        <meta charset="UTF-8"></head>
+        <body>
+        <h2>Datos del Revisor</h2>
+        ${tablaContactoExcel}
+        <br />
+        <h2>Evaluación SUS</h2>
+        ${tablaSUSExcel}
+        <br />
+        <h2>Resultado</h2>
+        <pre>${resultadoTexto}</pre>
+        </body>
+        </html>`;
+
+    var blob = new Blob([htmlExcel], { type: 'application/vnd.ms-excel' });
+    var link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "Evaluacion_SUS.xls";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+</script>
+
+</body>
+</html>
